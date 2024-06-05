@@ -1,0 +1,9 @@
+cmake_minimum_required(VERSION 3.10)
+
+project(RayTracing)
+
+find_package(fmt CONFIG REQUIRED)
+
+add_executable(RayTracing main.cc)
+
+target_link_libraries(RayTracing PRIVATE fmt::fmt)
