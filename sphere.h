@@ -5,55 +5,64 @@
 
 class sphere : public hittable {
     public:
-        sphere(const point3& center, double radius, shared_ptr<material> mat) 
-            : center1(center), radius(fmax(0, radius)), mat(mat), is_moving(false) {}
-
+        // stationary sphere
+        sphere(const point3& static_center, double radius, shared_ptr<material> mat) 
+            : center(static_center, vec3(0, 0, 0)), radius(fmax(0, radius)), mat(mat) {
+                // construct bounding box.
+                auto rvec = vec3(radius, radius, radius);
+                bbox = aabb(static_center - rvec, static_center + rvec);
+            }
+        // moving sphere.
         sphere(const point3& center1, const point3& center2, double radius, shared_ptr<material> mat)
-            : center1(center1), radius(std::fmax(0, radius)), mat(mat), is_moving(true) {
-                center_vec = center2 - center1;
+            : center(center1, center2 - center1), radius(std::fmax(0, radius)), mat(mat) {
+                // bounding box at t=0 and t=1.
+                // bounding box around the two boxes.
+                auto rvec = vec3(radius, radius, radius);
+                aabb box1(center.at(0) - rvec, center.at(0) + rvec);
+                aabb box2(center.at(1) - rvec, center.at(1) + rvec);
+                bbox = aabb(box1, box2);
             }
 
-    bool hit(const ray&r, interval ray_t, hit_record& rec) const override {
-        // get center of sphere based on ray's time
-        point3 center = is_moving ? sphere_center(r.time()) : center1;
-        vec3 oc = center - r.origin();
-        auto a = r.direction().length_squared();
-        auto h = dot(r.direction(), oc);
-        auto c = oc.length_squared() - radius*radius;
+        bool hit(const ray&r, interval ray_t, hit_record& rec) const override {
+            // get center of sphere based on ray's time
+            point3 current_center = center.at(r.time());
+            vec3 oc = current_center - r.origin();
+            auto a = r.direction().length_squared();
+            auto h = dot(r.direction(), oc);
+            auto c = oc.length_squared() - radius*radius;
 
-        auto discriminant = h*h - a*c;
-        if (discriminant < 0)
-            return false;
-        
-        auto sqrtd = sqrt(discriminant);
-
-        // find the nearest root that lies in the acceptable range.
-        auto root = (h - sqrtd) / a;
-        if (!ray_t.surrounds(root)) {
-            root = (h + sqrtd) / a;
-            if (!ray_t.surrounds(root))
+            auto discriminant = h*h - a*c;
+            if (discriminant < 0)
                 return false;
+            
+            auto sqrtd = sqrt(discriminant);
+
+            // find the nearest root that lies in the acceptable range.
+            auto root = (h - sqrtd) / a;
+            if (!ray_t.surrounds(root)) {
+                root = (h + sqrtd) / a;
+                if (!ray_t.surrounds(root))
+                    return false;
+            }
+
+            rec.t = root;
+            rec.p = r.at(rec.t);
+            vec3 outward_normal = (rec.p - current_center) / radius;
+            rec.set_face_normal(r, outward_normal);
+            rec.mat = mat;
+
+            return true;
         }
 
-        rec.t = root;
-        rec.p = r.at(rec.t);
-        vec3 outward_normal = (rec.p - center) / radius;
-        rec.set_face_normal(r, outward_normal);
-        rec.mat = mat;
-
-        return true;
-    }
+        aabb bounding_box() const override {
+            return bbox;
+        }
 
     private:
-        point3 center1;
+        ray center;
         double radius;
         shared_ptr<material> mat;
-        bool is_moving;
-        vec3 center_vec;
-
-        point3 sphere_center(double time) const {
-            return center1 + time*center_vec;
-        }
+        aabb bbox;
 };
 
 #endif
