@@ -45,7 +45,7 @@ class aabb {
           if (t1 < ray_t.max) ray_t.max = t1; 
         } else {
           if (t1 > ray_t.min) ray_t.min = t1;
-          if (t0 > ray_t.max) ray_t.max = t0;
+          if (t0 < ray_t.max) ray_t.max = t0;
         }
 
         if (ray_t.max <= ray_t.min)
@@ -54,6 +54,20 @@ class aabb {
 
       return true;
     }
+
+    int longest_axis() const {
+      // returns the index of the longest axis of the bounding box.
+
+      if (x.size() > y.size())
+        return x.size() > z.size() ? 0 : 2;
+      else 
+        return y.size() > z.size() ? 1 : 2;
+    }
+
+    static const aabb empty, universe;
 };
+
+const aabb aabb::empty = aabb(interval::empty, interval::empty, interval::empty);
+const aabb aabb::universe = aabb(interval::universe, interval::universe, interval::universe);
 
 #endif
