@@ -9,12 +9,16 @@ class aabb {
 
     aabb() {}  // aabb with empty intervals.
 
-    aabb(const interval& x, const interval& y, const interval& z) : x(x), y(y), z(z) {}
+    aabb(const interval& x, const interval& y, const interval& z) : x(x), y(y), z(z) {
+      pad_to_minimums();
+    }
 
     aabb(const point3& a, const point3& b) { 
-      x = (a[0] <= b[0]) ? interval(a[0], b[0]) : interval(b[0], a[0]);
-      y = (a[1] <= b[1]) ? interval(a[1], b[1]) : interval(b[1], a[1]);
-      z = (a[2] <= b[2]) ? interval(a[2], b[2]) : interval(b[2], a[2]);
+      x = interval(std::fmin(a[0], b[0]), std::fmax(b[0], a[0]));
+      y = interval(std::fmin(a[1], b[1]), std::fmax(b[1], a[1]));
+      z = interval(std::fmin(a[2], b[2]), std::fmax(b[2], a[2]));
+
+      pad_to_minimums();
     }
 
     aabb(const aabb& box0, const aabb& box1) {
@@ -65,6 +69,16 @@ class aabb {
     }
 
     static const aabb empty, universe;
+
+  private:
+    void pad_to_minimums() {
+      // ensure aabb has no side narrower than delta by padding.
+
+      double delta = 0.0001;
+      if (x.size() < delta) x = x.expand(delta);
+      if (y.size() < delta) y = y.expand(delta);
+      if (z.size() < delta) z = z.expand(delta);
+    }
 };
 
 const aabb aabb::empty = aabb(interval::empty, interval::empty, interval::empty);
