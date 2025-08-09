@@ -1,6 +1,7 @@
 #ifndef MATERIAL_H
 #define MATERIAL_H
 
+#include "onb.h"
 #include "texture.h"
 
 class hit_record;
