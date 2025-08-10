@@ -24,6 +24,10 @@ class onb {
             return axis[2];
         }
 
+        vec3 transform(const vec3& v) const {
+            return (v[0] * axis[0]) + (v[1] * axis[1]) + (v[2] * axis[2]);
+        }
+
     private:
         vec3 axis[3];
 };
