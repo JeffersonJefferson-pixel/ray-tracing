@@ -5,6 +5,7 @@
 
 #include "hittable.h"
 #include "material.h"
+#include "pdf.h"
 
 class camera {
     public:
@@ -154,23 +155,27 @@ class camera {
                 return color_from_emission;
             }
 
-            auto on_light = point3(random_double(213, 343), 554, random_double(227, 332));
-            auto to_light = on_light - rec.p;
-            auto distance_squared = to_light.length_squared();
-            to_light = unit_vector(to_light);
+            // auto on_light = point3(random_double(213, 343), 554, random_double(227, 332));
+            // auto to_light = on_light - rec.p;
+            // auto distance_squared = to_light.length_squared();
+            // to_light = unit_vector(to_light);
 
-            if (dot(to_light, rec.normal) < 0)
-                return color_from_emission;
+            // if (dot(to_light, rec.normal) < 0)
+            //     return color_from_emission;
             
-            double light_area = (343-213)*(332-227);
-            auto light_cosine = std::fabs(to_light.y());
-            if (light_cosine < 0.000001)
-                return color_from_emission;
+            // double light_area = (343-213)*(332-227);
+            // auto light_cosine = std::fabs(to_light.y());
+            // if (light_cosine < 0.000001)
+            //     return color_from_emission;
             
-            pdf_value = distance_squared / (light_cosine * light_area);
-            scattered = ray(rec.p, to_light, r.time());
+            // pdf_value = distance_squared / (light_cosine * light_area);
+            // scattered = ray(rec.p, to_light, r.time());
 
+            
             // pdf
+            cosine_pdf surface_pdf(rec.normal);
+            scattered = ray(rec.p, surface_pdf.generate(), r.time());
+            pdf_value = surface_pdf.value(scattered.direction());
             double scattering_pdf = rec.mat->scattering_pdf(r, rec, scattered);
             // pdf_value = scattering_pdf;
 
