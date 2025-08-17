@@ -14,6 +14,8 @@ class quad : public hittable {
         D = dot(normal, Q);
         w = n / dot(n, n);
 
+        area = n.length();
+
         set_bounding_box();
       }
     
@@ -80,6 +82,26 @@ class quad : public hittable {
     return true;
   }
 
+  double pdf_value(const point3& origin, const vec3& direction) const override {
+    hit_record rec;
+    // check if ray hit quad
+    if (!this->hit(ray(origin, direction), interval(0.001, infinity), rec))
+      return 0;
+    
+    // light sampling
+    auto distance_squared = rec.t * rec.t * direction.length_squared();
+    auto cosine = std::fabs(dot(direction, rec.normal) / direction.length());
+
+    return distance_squared / (cosine * area);
+  }
+
+  vec3 random(const point3& origin) const override {
+    // pick random point inside quad.
+    auto p = Q + (random_double() * u) + (random_double() * v);
+
+    return p - origin;
+  }
+
   private:
     point3 Q; // the starting corner.
     vec3 u, v; // the vectors representing first and second side.
@@ -88,6 +110,7 @@ class quad : public hittable {
     vec3 normal; // normal vector of quad.
     vec3 w; // w is a constant vector for a given quad.
     double D;
+    double area;
 };
 
 
